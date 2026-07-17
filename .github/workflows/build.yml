@@ -121,6 +121,7 @@ jobs:
             docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost-dockerfile:latest
 
       - name: Mark upstream tag as processed
+        continue-on-error: true
         env:
           MARKER_PUSH_TOKEN: ${{ secrets.MARKER_PUSH_TOKEN }}
         run: |
@@ -136,20 +137,21 @@ jobs:
 
           git tag "$marker"
 
-          # First try default token from actions/checkout
-          git push origin "$marker"
-          rc=$?
-
-          # If blocked by missing workflows permission, optionally retry with PAT/fine-grained token
-          if [ $rc -ne 0 ] && [ -n "$MARKER_PUSH_TOKEN" ]; then
+          pushed=false
+          # First try default token from actions/checkout.
+          if git push origin "$marker"; then
+            pushed=true
+          # If blocked by missing workflows permission, optionally retry with PAT/fine-grained token.
+          elif [ -n "$MARKER_PUSH_TOKEN" ]; then
             echo "Retry marker push with MARKER_PUSH_TOKEN"
             git remote set-url origin "https://x-access-token:${MARKER_PUSH_TOKEN}@github.com/${{ github.repository }}.git"
-            git push origin "$marker"
-            rc=$?
+            if git push origin "$marker"; then
+              pushed=true
+            fi
           fi
 
-          # Do not fail image publish if marker push is blocked by repo token policy
-          if [ $rc -ne 0 ]; then
+          # Best-effort marker push: do not fail image publish if marker push is blocked by repo token policy.
+          if [ "$pushed" != "true" ]; then
             echo "::warning::Marker push failed (likely token permission policy). Image publish already completed."
-            exit 0
           fi
+          exit 0
