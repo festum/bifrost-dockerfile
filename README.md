@@ -2,6 +2,8 @@
 
 Extends the upstream [`maximhq/bifrost`](https://hub.docker.com/r/maximhq/bifrost) image and guarantees `npx` is available.
 
+This repo adds `npx` support as a practical workaround for upstream gap tracked in [maximhq/bifrost#1548](https://github.com/maximhq/bifrost/issues/1548).
+
 ## What this repository does
 
 - Builds from `maximhq/bifrost:<upstream-tag>`.
