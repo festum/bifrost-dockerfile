@@ -76,6 +76,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate Docker Hub credentials
+        run: |
+          if [ -z "${DOCKERHUB_USERNAME}" ]; then
+            echo "::error::Missing DOCKERHUB_USERNAME secret"
+            exit 1
+          fi
+          if [ -z "${DOCKERHUB_TOKEN}" ]; then
+            echo "::error::Missing DOCKERHUB_TOKEN secret"
+            exit 1
+          fi
+          echo "Docker Hub user: ${DOCKERHUB_USERNAME}"
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
