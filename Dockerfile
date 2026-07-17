@@ -5,6 +5,8 @@ FROM ${NODE_FALLBACK_IMAGE} AS node_fallback
 
 FROM maximhq/bifrost:${UPSTREAM_TAG}
 
+ENV NPM_CONFIG_CACHE=/tmp/.npm
+
 USER root
 SHELL ["/bin/sh", "-euxo", "pipefail", "-c"]
 
