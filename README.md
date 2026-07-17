@@ -32,17 +32,20 @@ Workflow file: `.github/workflows/build.yml`
 
 Triggers:
 
-- **Schedule** (`cron`): builds up to 3 lanes by default — `latest` + newest unprocessed stable tag + newest unprocessed pre-release tag (if any).
+- **Schedule** (`cron`): builds up to 3 lanes by default — `latest` + newest unprocessed stable tag + newest unprocessed pre-release tag (if any). Non-image artifact tags are skipped.
 - **Manual dispatch**:
-  - `backfill_all=true` builds every unprocessed upstream tag.
+  - `backfill_all=true` builds unprocessed upstream tags, capped by `max_tags` (default `200`, hard ceiling `256`).
   - `explicit_tags` (comma-separated) force-builds selected upstream tags (for manual sync).
+  - `max_tags` controls matrix size per run (default `200`, hard max `256`).
+
+Per selected upstream tag, the workflow resolves the exact platform set from Docker Hub tag metadata (`maximhq/bifrost:<tag>`), then builds all resolved platforms for both image registries.
 
 Outputs are pushed to:
 
-- `ghcr.io/<github-owner>/bifrost-dockerfile:<upstream-tag>`
-- `ghcr.io/<github-owner>/bifrost-dockerfile:latest` (only for current newest upstream tag)
-- `docker.io/<dockerhub-user>/bifrost-dockerfile:<upstream-tag>`
-- `docker.io/<dockerhub-user>/bifrost-dockerfile:latest` (only for current newest upstream tag)
+- `ghcr.io/<github-owner>/bifrost-dockerfile:<upstream-tag>` (all platforms available on upstream tag)
+- `ghcr.io/<github-owner>/bifrost-dockerfile:latest` (only for current newest upstream tag; uses that tag's resolved platform set)
+- `docker.io/<dockerhub-user>/bifrost-dockerfile:<upstream-tag>` (all platforms available on upstream tag)
+- `docker.io/<dockerhub-user>/bifrost-dockerfile:latest` (only for current newest upstream tag; uses that tag's resolved platform set)
 
 ## Required repository settings
 
@@ -83,5 +86,5 @@ python scripts/detect_new_tags.py --repository maximhq/bifrost --explicit-tags "
 Detect all missing tags (for backfill):
 
 ```bash
-python scripts/detect_new_tags.py --repository maximhq/bifrost --latest-only false
+python scripts/detect_new_tags.py --repository maximhq/bifrost --latest-only false --max-tags 200
 ```

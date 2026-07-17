@@ -61,6 +61,9 @@ def main() -> None:
         p for p in (normalize_platform(img) for img in images if isinstance(img, dict)) if p
     ])
 
+    if not platforms:
+        raise SystemExit(f"No valid platforms found for {args.repository}:{args.tag}")
+
     result = {
         "repository": args.repository,
         "tag": args.tag,

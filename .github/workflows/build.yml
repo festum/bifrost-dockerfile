@@ -15,6 +15,11 @@ on:
         required: false
         type: string
         default: ""
+      max_tags:
+        description: "Backfill cap per run (1-256, default 200)"
+        required: false
+        type: string
+        default: "200"
 
 permissions:
   contents: write
@@ -49,11 +54,17 @@ jobs:
           fi
 
           EXPLICIT_TAGS="${{ github.event_name == 'workflow_dispatch' && inputs.explicit_tags || '' }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.backfill_all }}" = "true" ]; then
+            MAX_TAGS="${{ inputs.max_tags }}"
+          else
+            MAX_TAGS="200"
+          fi
 
           python scripts/detect_new_tags.py \
             --repository maximhq/bifrost \
             --latest-only "$LATEST_ONLY" \
             --explicit-tags "$EXPLICIT_TAGS" \
+            --max-tags "$MAX_TAGS" \
             --github-output "$GITHUB_OUTPUT"
 
   build-and-push:
@@ -113,8 +124,6 @@ jobs:
             --repository maximhq/bifrost \
             --tag "${{ matrix.tag }}" \
             --github-output "$GITHUB_OUTPUT"
-
-          echo "Resolved platforms: $resolved_platforms"
 
       - name: Build and push tag image
         uses: docker/build-push-action@v6
