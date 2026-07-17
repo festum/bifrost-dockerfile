@@ -120,12 +120,18 @@ jobs:
       - name: Resolve upstream platforms for this tag
         id: platforms
         run: |
-          python3 scripts/get_tag_platforms.py \
+          if ! python3 scripts/get_tag_platforms.py \
             --repository maximhq/bifrost \
             --tag "${{ matrix.tag }}" \
-            --github-output "$GITHUB_OUTPUT"
+            --github-output "$GITHUB_OUTPUT"; then
+            echo "::warning::Skip tag ${{ matrix.tag }}: no valid platform metadata or upstream registry temporarily unavailable"
+            echo "platforms=" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Build and push tag image
+      - name: Build and push tag image (attempt 1)
+        if: ${{ steps.platforms.outputs.platforms != '' }}
+        id: build_tag_attempt_1
+        continue-on-error: true
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -138,8 +144,32 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/bifrost:${{ matrix.tag }}
             docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost:${{ matrix.tag }}
 
-      - name: Build and push latest alias
-        if: ${{ matrix.tag == needs.detect.outputs.latest_upstream }}
+      - name: Build and push tag image (attempt 2)
+        if: ${{ steps.platforms.outputs.platforms != '' && steps.build_tag_attempt_1.outcome == 'failure' }}
+        id: build_tag_attempt_2
+        continue-on-error: true
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          platforms: ${{ steps.platforms.outputs.platforms }}
+          build-args: |
+            UPSTREAM_TAG=${{ matrix.tag }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/bifrost:${{ matrix.tag }}
+            docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost:${{ matrix.tag }}
+
+      - name: Ensure tag image build succeeded
+        if: ${{ steps.platforms.outputs.platforms != '' && steps.build_tag_attempt_1.outcome == 'failure' && steps.build_tag_attempt_2.outcome == 'failure' }}
+        run: |
+          echo "::error::Tag image build failed twice for ${matrix.tag}"
+          exit 1
+
+      - name: Build and push latest alias (attempt 1)
+        if: ${{ matrix.tag == needs.detect.outputs.latest_upstream && steps.platforms.outputs.platforms != '' }}
+        id: build_latest_attempt_1
+        continue-on-error: true
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -152,7 +182,30 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/bifrost:latest
             docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost:latest
 
+      - name: Build and push latest alias (attempt 2)
+        if: ${{ matrix.tag == needs.detect.outputs.latest_upstream && steps.platforms.outputs.platforms != '' && steps.build_latest_attempt_1.outcome == 'failure' }}
+        id: build_latest_attempt_2
+        continue-on-error: true
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          platforms: ${{ steps.platforms.outputs.platforms }}
+          build-args: |
+            UPSTREAM_TAG=${{ matrix.tag }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/bifrost:latest
+            docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost:latest
+
+      - name: Ensure latest alias build succeeded
+        if: ${{ matrix.tag == needs.detect.outputs.latest_upstream && steps.platforms.outputs.platforms != '' && steps.build_latest_attempt_1.outcome == 'failure' && steps.build_latest_attempt_2.outcome == 'failure' }}
+        run: |
+          echo "::error::Latest alias build failed twice for ${matrix.tag}"
+          exit 1
+
       - name: Mark upstream tag as processed
+        if: ${{ steps.platforms.outputs.platforms != '' }}
         continue-on-error: true
         run: |
           set +e
