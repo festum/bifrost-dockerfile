@@ -38,6 +38,8 @@ Outputs are pushed to:
 
 - `ghcr.io/<github-owner>/bifrost-dockerfile:<upstream-tag>`
 - `ghcr.io/<github-owner>/bifrost-dockerfile:latest` (only for current newest upstream tag)
+- `docker.io/<dockerhub-user>/bifrost-dockerfile:<upstream-tag>`
+- `docker.io/<dockerhub-user>/bifrost-dockerfile:latest` (only for current newest upstream tag)
 
 ## Required repository settings
 
@@ -50,10 +52,10 @@ The workflow uses:
 
 ### Secrets
 
-- `DOCKERHUB_USERNAME` (optional)
-- `DOCKERHUB_TOKEN` (optional)
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
 
-If both Docker Hub secrets are set, the workflow also logs in to Docker Hub for additional publishing workflows you may add later. Current scaffold pushes to GHCR.
+`DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` are required because the workflow now pushes to Docker Hub and GHCR on each run.
 
 ## Tag utilities
 

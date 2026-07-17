@@ -76,9 +76,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to Docker Hub (optional)
-        if: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKERHUB_USERNAME }}
@@ -93,7 +91,8 @@ jobs:
           build-args: |
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:${{ matrix.tag }}
+            ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/bifrost-dockerfile:latest
 
       - name: Build and push latest alias
         if: ${{ matrix.tag == needs.detect.outputs.latest_upstream }}
@@ -106,6 +105,7 @@ jobs:
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:latest
+            docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost-dockerfile:latest
 
       - name: Mark upstream tag as processed
         run: |
