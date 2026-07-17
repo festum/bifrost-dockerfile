@@ -9,6 +9,7 @@ This repo adds `npx` support as a practical workaround for upstream gap tracked 
 - Builds from `maximhq/bifrost:<upstream-tag>`.
 - Installs Node.js + npm only when `npx` is missing.
 - Publishes images automatically with GitHub Actions.
+- For each upstream tag, builds all platforms available in upstream tag metadata (not a fixed hardcoded platform list).
 - Tracks already-processed upstream tags via git tags (`upstream/<tag>`).
 
 ## Local usage

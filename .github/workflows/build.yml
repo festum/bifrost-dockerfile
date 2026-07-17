@@ -106,13 +106,23 @@ jobs:
           username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ env.DOCKERHUB_TOKEN }}
 
+      - name: Resolve upstream platforms for this tag
+        id: platforms
+        run: |
+          python3 scripts/get_tag_platforms.py \
+            --repository maximhq/bifrost \
+            --tag "${{ matrix.tag }}" \
+            --github-output "$GITHUB_OUTPUT"
+
+          echo "Resolved platforms: $resolved_platforms"
+
       - name: Build and push tag image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ steps.platforms.outputs.platforms }}
           build-args: |
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
@@ -126,7 +136,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ steps.platforms.outputs.platforms }}
           build-args: |
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
