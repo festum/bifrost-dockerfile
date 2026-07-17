@@ -31,8 +31,10 @@ Workflow file: `.github/workflows/build.yml`
 
 Triggers:
 
-- **Schedule** (`cron`): checks Docker Hub and builds only the newest unprocessed upstream tag.
-- **Manual dispatch**: optional `backfill_all=true` to build every unprocessed upstream tag.
+- **Schedule** (`cron`): builds a pair by default — `latest` + newest unprocessed non-`latest` tag (if any).
+- **Manual dispatch**:
+  - `backfill_all=true` builds every unprocessed upstream tag.
+  - `explicit_tags` (comma-separated) force-builds selected upstream tags (for manual sync).
 
 Outputs are pushed to:
 
@@ -65,10 +67,16 @@ List upstream tags:
 python scripts/get_upstream_tags.py --repository maximhq/bifrost
 ```
 
-Detect new tags (default: latest only):
+Detect new tags (default: latest + newest unprocessed non-latest):
 
 ```bash
 python scripts/detect_new_tags.py --repository maximhq/bifrost --latest-only true
+```
+
+Force selected tags (manual sync):
+
+```bash
+python scripts/detect_new_tags.py --repository maximhq/bifrost --explicit-tags "latest,v2.0.0-prerelease2"
 ```
 
 Detect all missing tags (for backfill):

@@ -44,10 +44,48 @@ def parse_bool(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def parse_csv_tags(value: str) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for raw in value.split(","):
+        tag = raw.strip()
+        if not tag or tag in seen:
+            continue
+        seen.add(tag)
+        out.append(tag)
+    return out
+
+
+def dedupe_preserve_order(tags: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for tag in tags:
+        if tag in seen:
+            continue
+        seen.add(tag)
+        deduped.append(tag)
+    return deduped
+
+
+def select_new_tags(upstream_tags: list[str], processed_tags: set[str], latest_only: bool) -> list[str]:
+    unprocessed = [tag for tag in upstream_tags if tag not in processed_tags]
+    if not latest_only:
+        return unprocessed
+
+    latest = upstream_tags[0] if upstream_tags else ""
+    newest_unprocessed_non_latest = next(
+        (tag for tag in upstream_tags[1:] if tag not in processed_tags),
+        "",
+    )
+    selected = [tag for tag in [latest, newest_unprocessed_non_latest] if tag]
+    return dedupe_preserve_order(selected)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Detect new upstream tags")
     parser.add_argument("--repository", default="maximhq/bifrost")
     parser.add_argument("--latest-only", default="true")
+    parser.add_argument("--explicit-tags", default="")
     parser.add_argument("--github-output", default="")
     args = parser.parse_args()
 
@@ -55,13 +93,19 @@ def main() -> None:
     upstream_tags: list[str] = fetch_tags(args.repository)
     processed_tags = get_processed_tags(prefix="upstream/")
 
-    new_tags = [tag for tag in upstream_tags if tag not in processed_tags]
-    if parse_bool(args.latest_only):
-        new_tags = new_tags[:1]
+    latest_only = parse_bool(args.latest_only)
+    new_tags = select_new_tags(upstream_tags, processed_tags, latest_only)
+
+    explicit_tags = parse_csv_tags(args.explicit_tags)
+    if explicit_tags:
+        # Manual mode: allow forcing selected tags regardless of processed markers,
+        # but keep only tags that exist upstream.
+        upstream_set = set(upstream_tags)
+        new_tags = [t for t in explicit_tags if t in upstream_set]
 
     result: dict[str, Any] = {
         "repository": args.repository,
-        "latest_only": parse_bool(args.latest_only),
+        "latest_only": latest_only,
         "latest_upstream": upstream_tags[0] if upstream_tags else "",
         "new_tags": new_tags,
         "new_tags_count": len(new_tags),

@@ -6,10 +6,15 @@ on:
   workflow_dispatch:
     inputs:
       backfill_all:
-        description: "Build all missing upstream tags instead of only latest"
+        description: "Build all missing upstream tags instead of only latest/newest pair"
         required: false
         type: boolean
         default: false
+      explicit_tags:
+        description: "Optional comma-separated upstream tags to build (e.g. latest,v2.0.0-prerelease2)"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -43,9 +48,12 @@ jobs:
             LATEST_ONLY=true
           fi
 
+          EXPLICIT_TAGS="${{ github.event_name == 'workflow_dispatch' && inputs.explicit_tags || '' }}"
+
           python scripts/detect_new_tags.py \
             --repository maximhq/bifrost \
             --latest-only "$LATEST_ONLY" \
+            --explicit-tags "$EXPLICIT_TAGS" \
             --github-output "$GITHUB_OUTPUT"
 
   build-and-push:
