@@ -91,8 +91,8 @@ jobs:
           build-args: |
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:latest
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/bifrost-dockerfile:latest
+            ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:${{ matrix.tag }}
+            docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost-dockerfile:${{ matrix.tag }}
 
       - name: Build and push latest alias
         if: ${{ matrix.tag == needs.detect.outputs.latest_upstream }}
