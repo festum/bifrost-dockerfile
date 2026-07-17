@@ -42,8 +42,8 @@ Per selected upstream tag, the workflow resolves the exact platform set from Doc
 
 Outputs are pushed to:
 
-- `ghcr.io/<github-owner>/bifrost-dockerfile:<upstream-tag>` (all platforms available on upstream tag)
-- `ghcr.io/<github-owner>/bifrost-dockerfile:latest` (only for current newest upstream tag; uses that tag's resolved platform set)
+- `ghcr.io/<github-owner>/bifrost:<upstream-tag>` (all platforms available on upstream tag)
+- `ghcr.io/<github-owner>/bifrost:latest` (only for current newest upstream tag; uses that tag's resolved platform set)
 - `docker.io/<dockerhub-user>/bifrost:<upstream-tag>` (all platforms available on upstream tag)
 - `docker.io/<dockerhub-user>/bifrost:latest` (only for current newest upstream tag; uses that tag's resolved platform set)
 

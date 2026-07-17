@@ -135,7 +135,7 @@ jobs:
           build-args: |
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:${{ matrix.tag }}
+            ghcr.io/${{ github.repository_owner }}/bifrost:${{ matrix.tag }}
             docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost:${{ matrix.tag }}
 
       - name: Build and push latest alias
@@ -149,7 +149,7 @@ jobs:
           build-args: |
             UPSTREAM_TAG=${{ matrix.tag }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bifrost-dockerfile:latest
+            ghcr.io/${{ github.repository_owner }}/bifrost:latest
             docker.io/${{ env.DOCKERHUB_USERNAME }}/bifrost:latest
 
       - name: Mark upstream tag as processed
