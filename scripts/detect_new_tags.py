@@ -67,17 +67,27 @@ def dedupe_preserve_order(tags: list[str]) -> list[str]:
     return deduped
 
 
+def is_prerelease_tag(tag: str) -> bool:
+    t = tag.lower()
+    hints = ("prerelease", "alpha", "beta", "rc", "nightly", "preview")
+    return any(h in t for h in hints)
+
+
 def select_new_tags(upstream_tags: list[str], processed_tags: set[str], latest_only: bool) -> list[str]:
     unprocessed = [tag for tag in upstream_tags if tag not in processed_tags]
     if not latest_only:
         return unprocessed
 
     latest = upstream_tags[0] if upstream_tags else ""
-    newest_unprocessed_non_latest = next(
-        (tag for tag in upstream_tags[1:] if tag not in processed_tags),
+    newest_unprocessed_stable = next(
+        (tag for tag in upstream_tags[1:] if tag not in processed_tags and not is_prerelease_tag(tag)),
         "",
     )
-    selected = [tag for tag in [latest, newest_unprocessed_non_latest] if tag]
+    newest_unprocessed_prerelease = next(
+        (tag for tag in upstream_tags[1:] if tag not in processed_tags and is_prerelease_tag(tag)),
+        "",
+    )
+    selected = [tag for tag in [latest, newest_unprocessed_stable, newest_unprocessed_prerelease] if tag]
     return dedupe_preserve_order(selected)
 
 

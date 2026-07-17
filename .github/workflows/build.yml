@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       backfill_all:
-        description: "Build all missing upstream tags instead of only latest/newest pair"
+        description: "Build all missing upstream tags instead of default latest/stable/prerelease set"
         required: false
         type: boolean
         default: false

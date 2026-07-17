@@ -31,7 +31,7 @@ Workflow file: `.github/workflows/build.yml`
 
 Triggers:
 
-- **Schedule** (`cron`): builds a pair by default — `latest` + newest unprocessed non-`latest` tag (if any).
+- **Schedule** (`cron`): builds up to 3 lanes by default — `latest` + newest unprocessed stable tag + newest unprocessed pre-release tag (if any).
 - **Manual dispatch**:
   - `backfill_all=true` builds every unprocessed upstream tag.
   - `explicit_tags` (comma-separated) force-builds selected upstream tags (for manual sync).
@@ -67,7 +67,7 @@ List upstream tags:
 python scripts/get_upstream_tags.py --repository maximhq/bifrost
 ```
 
-Detect new tags (default: latest + newest unprocessed non-latest):
+Detect new tags (default: latest + newest unprocessed stable + newest unprocessed pre-release):
 
 ```bash
 python scripts/detect_new_tags.py --repository maximhq/bifrost --latest-only true
