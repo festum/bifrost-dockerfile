@@ -1,4 +1,4 @@
-# bifrost-dockerfile
+# bifrost
 
 Extends the upstream [`maximhq/bifrost`](https://hub.docker.com/r/maximhq/bifrost) image and guarantees `npx` is available.
 
