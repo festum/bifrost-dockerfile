@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       backfill_all:
-        description: "Build all missing upstream tags instead of default latest/stable/prerelease set"
+        description: "Build all missing upstream tags instead of default newest-buildable-only mode"
         required: false
         type: boolean
         default: false
@@ -206,9 +206,8 @@ jobs:
 
       - name: Mark upstream tag as processed
         if: ${{ steps.platforms.outputs.platforms != '' }}
-        continue-on-error: true
         run: |
-          set +e
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -219,7 +218,4 @@ jobs:
           fi
 
           git tag "$marker"
-          if ! git push origin "$marker"; then
-            echo "::warning::Marker push failed (likely token permission policy). Image publish already completed."
-          fi
-          exit 0
+          git push origin "$marker"

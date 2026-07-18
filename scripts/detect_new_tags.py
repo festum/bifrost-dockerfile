@@ -129,25 +129,11 @@ def fetch_recent_tag_entries(
 
 
 def select_latest_only_tags(entries: list[dict[str, Any]], processed_tags: set[str]) -> list[str]:
+    # Default mode should only check whether the newest buildable upstream tag is new.
     latest = next((e["name"] for e in entries if e.get("buildable")), "")
-    newest_unprocessed_stable = next(
-        (
-            e["name"]
-            for e in entries
-            if e.get("buildable") and e["name"] not in processed_tags and not is_prerelease_tag(e["name"])
-        ),
-        "",
-    )
-    newest_unprocessed_prerelease = next(
-        (
-            e["name"]
-            for e in entries
-            if e.get("buildable") and e["name"] not in processed_tags and is_prerelease_tag(e["name"])
-        ),
-        "",
-    )
-    selected = [tag for tag in [latest, newest_unprocessed_stable, newest_unprocessed_prerelease] if tag]
-    return dedupe_preserve_order(selected)
+    if latest and latest not in processed_tags:
+        return [latest]
+    return []
 
 
 def select_new_tags(upstream_tags: list[str], processed_tags: set[str], latest_only: bool) -> list[str]:
@@ -185,7 +171,7 @@ def main() -> None:
     if latest_only and not explicit_tags:
         # Keep latest-only behavior independent from backfill caps.
         recent_entries = fetch_recent_tag_entries(args.repository, max_pages=5)
-        upstream_tags = [e["name"] for e in recent_entries]
+        upstream_tags = [e["name"] for e in recent_entries if e.get("buildable")]
         new_tags = select_latest_only_tags(recent_entries, processed_tags)
     else:
         fetch_tags = _import_fetch_tags()
