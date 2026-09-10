@@ -129,11 +129,26 @@ def fetch_recent_tag_entries(
 
 
 def select_latest_only_tags(entries: list[dict[str, Any]], processed_tags: set[str]) -> list[str]:
-    # Default mode should only check whether the newest buildable upstream tag is new.
+    # Rebuild latest (moving target) plus the newest unprocessed stable and
+    # pre-release versioned tags so new releases are caught promptly.
     latest = next((e["name"] for e in entries if e.get("buildable")), "")
-    if latest and latest not in processed_tags:
-        return [latest]
-    return []
+    newest_unprocessed_stable = next(
+        (
+            e["name"]
+            for e in entries
+            if e.get("buildable") and e["name"] not in processed_tags and e["name"] != latest and not is_prerelease_tag(e["name"])
+        ),
+        "",
+    )
+    newest_unprocessed_prerelease = next(
+        (
+            e["name"]
+            for e in entries
+            if e.get("buildable") and e["name"] not in processed_tags and e["name"] != latest and is_prerelease_tag(e["name"])
+        ),
+        "",
+    )
+    return dedupe_preserve_order([tag for tag in [latest, newest_unprocessed_stable, newest_unprocessed_prerelease] if tag])
 
 
 def select_new_tags(upstream_tags: list[str], processed_tags: set[str], latest_only: bool) -> list[str]:
